@@ -248,8 +248,11 @@
 			let boardZ = boardDistanceX;
 			let crosshairZ = boardZ - 0.01;
 			const DART_IDLE_DISTANCE_FROM_CAMERA = 0.55;
-			const DART_IDLE_VIEW_OFFSET_X = -0.24;
-			const DART_IDLE_VIEW_OFFSET_Y = -0.18;
+			const DART_IDLE_NDC_X_DESKTOP = -0.58;
+			const DART_IDLE_NDC_X_MOBILE = -0.36;
+			const DART_IDLE_NDC_Y_DESKTOP = -0.52;
+			const DART_IDLE_NDC_Y_MOBILE = -0.42;
+			const DART_IDLE_NDC_SAFE_MARGIN = 0.08;
 			const DART_CHARGE_BACK_DISTANCE = 0.06;
 			let randomErrorK = DIFFICULTY_PRESETS[currentDifficulty].k;
 			const RETICLE_RANDOM_RADIUS = 0.2;
@@ -638,10 +641,12 @@
 				const vFov = THREE.MathUtils.degToRad(camera.fov);
 				const halfHeight = Math.tan(vFov * 0.5) * DART_IDLE_DISTANCE_FROM_CAMERA;
 				const halfWidth = halfHeight * camera.aspect;
-				const safeYOffset = Math.min(halfHeight * 0.45, 0.22);
-				const x = THREE.MathUtils.clamp(DART_IDLE_VIEW_OFFSET_X, -halfWidth * 0.8, halfWidth * 0.8);
-				const y = BOARD_CENTER_Y - safeYOffset + THREE.MathUtils.clamp(DART_IDLE_VIEW_OFFSET_Y, -halfHeight * 0.35,
-					halfHeight * 0.1);
+				const targetNdcX = isTouchDevice ? DART_IDLE_NDC_X_MOBILE : DART_IDLE_NDC_X_DESKTOP;
+				const targetNdcY = isTouchDevice ? DART_IDLE_NDC_Y_MOBILE : DART_IDLE_NDC_Y_DESKTOP;
+				const ndcX = THREE.MathUtils.clamp(targetNdcX, -1 + DART_IDLE_NDC_SAFE_MARGIN, 1 - DART_IDLE_NDC_SAFE_MARGIN);
+				const ndcY = THREE.MathUtils.clamp(targetNdcY, -1 + DART_IDLE_NDC_SAFE_MARGIN, 1 - DART_IDLE_NDC_SAFE_MARGIN);
+				const x = ndcX * halfWidth;
+				const y = BOARD_CENTER_Y + ndcY * halfHeight;
 				dartIdlePos.set(x, y, CAMERA_POS_Z + DART_IDLE_DISTANCE_FROM_CAMERA);
 			}
 			updateDartIdleAnchor();
@@ -1327,6 +1332,7 @@
 			}
 
 			function updateIdlePose() {
+				updateDartIdleAnchor();
 				dart.position.copy(dartIdlePos);
 				dart.scale.setScalar(DART_MODEL_SCALE);
 				dart.lookAt(0, BOARD_CENTER_Y, boardZ + 0.004);
