@@ -1,0 +1,1443 @@
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>照片飞镖盘</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+	</head>
+	<body class="m-0 h-full overflow-hidden bg-[radial-gradient(circle_at_50%_30%,#171a24,#0f1117_65%)] font-sans">
+		<!-- 设置按钮：左上角悬浮圆球 -->
+		<div id="settingsWrap" class="fixed left-6 top-6 z-30">
+			<button id="settingsBtn"
+				class="group flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/20 text-white shadow-lg backdrop-blur-xl transition-all duration-300 hover:bg-white/10 hover:shadow-xl active:scale-90 active:bg-white/20"
+				aria-label="settings">
+				<!-- 齿轮图标 -->
+				<svg viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg"
+					class="h-6 w-6 opacity-80 transition-transform duration-500 group-hover:rotate-90 group-hover:opacity-100">
+					<path
+						d="M890.53893 559.569946c2.114575-16.294021 3.482653-32.587042 3.482653-49.999309 0-17.288351-1.61691-33.582371-3.482653-49.999309l107.461589-84.078346c9.701463-7.587887 12.313703-21.393584 6.094893-32.588041l-101.864361-176.241244c-6.094893-11.192458-19.90059-15.297692-31.094048-11.192458l-126.864515 50.993639c-26.492149-20.397256-55.098873-37.187942-86.068005-49.999309L638.801558 21.392585C637.185646 9.079882 626.612771 0 613.802403 0H409.948765c-12.686452 0-23.384243 9.203798-25.000154 21.392585l-19.402926 135.072984c-31.094048 12.686452-59.575856 30.099718-86.068005 49.999309l-126.864515-50.994638c-11.815039-4.601899-24.999155 0-31.094048 11.194457L19.655755 342.90594c-6.715475 11.193458-3.481654 24.999155 6.094893 32.587042l107.46159 84.078346c-2.114575 16.293021-3.482653 33.083707-3.482653 49.999309 0 16.914602 1.61691 33.581372 3.482653 49.999309L25.626732 643.648292C15.92427 651.235179 13.313029 665.040877 19.531839 676.234334l101.864361 176.241244c6.093894 11.194457 19.90059 15.298691 31.094048 11.194457l126.864515-50.995638c26.492149 20.398255 55.097874 37.18994 86.068005 50.000309l19.401926 135.072984c1.61691 12.188787 12.189786 21.392585 25.000154 21.392585h203.852639c12.686452 0 23.383244-9.203798 25.000154-21.392585l19.401926-135.072984c31.094048-12.686452 59.576855-30.099718 86.069005-49.99931l126.864515 50.994639c11.815039 4.601899 24.999155 0 31.093049-11.194457L1003.970496 676.234334c6.094893-11.193458 3.482653-24.999155-6.093893-32.586042l-107.337673-84.078346zM511.938042 688.050372c-98.381708 0-178.355819-79.974111-178.355819-178.355819s79.974111-178.355819 178.355819-178.355818S690.293861 411.312846 690.293861 509.694553s-79.974111 178.355819-178.355819 178.355819z m0 0">
+					</path>
+				</svg>
+			</button>
+		</div>
+
+		<!-- 上传按钮：左下角悬浮圆球 -->
+		<div id="uploadWrap" class="fixed bottom-6 left-6 z-30">
+			<button id="uploadBtn"
+				class="group flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/20 text-white shadow-lg backdrop-blur-xl transition-all duration-300 hover:bg-white/10 hover:shadow-xl active:scale-90 active:bg-white/20"
+				aria-label="upload">
+				<!-- 图片上传图标 -->
+				<svg t="1771408306966" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg"
+					class="h-6 w-6 opacity-80 transition-opacity group-hover:opacity-100">
+					<path
+						d="M512 512m-136.533333 0a136.533333 136.533333 0 1 0 273.066666 0 136.533333 136.533333 0 1 0-273.066666 0Z">
+					</path>
+					<path
+						d="M384 85.333333l-78.08 85.333334H170.666667a85.333333 85.333333 0 0 0-85.333334 85.333333v512a85.333333 85.333333 0 0 0 85.333334 85.333333h682.666666a85.333333 85.333333 0 0 0 85.333334-85.333333V256a85.333333 85.333333 0 0 0-85.333334-85.333333h-135.253333L640 85.333333zM512 725.333333a213.333333 213.333333 0 1 1 213.333333-213.333333 213.333333 213.333333 0 0 1-213.333333 213.333333z">
+					</path>
+				</svg>
+			</button>
+			<input id="fileInput" class="hidden" type="file" accept="image/*" />
+		</div>
+
+		<!-- 分数面板：右上角 HUD 风格 -->
+		<div id="scoreBox" class="pointer-events-none fixed right-6 top-6 z-30 flex flex-col items-end gap-1">
+
+			<!-- 主分数 (HUD 大字) -->
+			<div id="lastScore"
+				class="font-sans text-[64px] font-bold leading-[0.9] tracking-tighter text-white drop-shadow-2xl tabular-nums [text-shadow:0_4px_24px_rgba(0,0,0,0.5)]">
+				0
+			</div>
+
+			<!-- 总分 (胶囊背景) -->
+			<div
+				class="mt-2 flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-3 py-1.5 backdrop-blur-md">
+				<span class="text-xs uppercase text-white/50">总分</span>
+				<span id="totalScore" class="text-base text-white tabular-nums">0</span>
+			</div>
+
+		</div>
+
+		<div id="onboardingOverlay" aria-hidden="true"
+			class="fixed inset-0 z-40 hidden items-center justify-center bg-black/50 p-5 backdrop-blur-xl">
+			<div role="dialog" aria-modal="true"
+				class="w-[min(92vw,400px)] rounded-3xl border border-white/[0.13] bg-white/[0.07] p-5 text-white shadow-2xl backdrop-blur-2xl ring-1 ring-inset ring-white/[0.06]">
+
+				<!-- Title -->
+				<div class="mb-4 text-center">
+					<div class="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/40">快速上手</div>
+					<div class="mt-1 text-[18px] font-semibold tracking-tight text-white/90">飞镖游戏</div>
+				</div>
+
+				<!-- Steps -->
+				<ol class="mb-5 space-y-1.5">
+					<li
+						class="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.05] px-3.5 py-2.5">
+						<span
+							class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/[0.12] text-[11px] font-semibold tabular-nums text-white/60 ring-1 ring-inset ring-white/[0.1]">1</span>
+						<span class="text-[13px] text-white/80">长按屏幕蓄力</span>
+					</li>
+					<li
+						class="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.05] px-3.5 py-2.5">
+						<span
+							class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/[0.12] text-[11px] font-semibold tabular-nums text-white/60 ring-1 ring-inset ring-white/[0.1]">2</span>
+						<span class="text-[13px] text-white/80">上下移动手指瞄准</span>
+					</li>
+					<li
+						class="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.05] px-3.5 py-2.5">
+						<span
+							class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/[0.12] text-[11px] font-semibold tabular-nums text-white/60 ring-1 ring-inset ring-white/[0.1]">3</span>
+						<span class="text-[13px] text-white/80">松手投出飞镖</span>
+					</li>
+					<li
+						class="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.05] px-3.5 py-2.5">
+						<span
+							class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/[0.12] text-[11px] font-semibold tabular-nums text-white/60 ring-1 ring-inset ring-white/[0.1]">4</span>
+						<span class="text-[13px] text-white/80">左下角可上传自定义照片</span>
+					</li>
+				</ol>
+
+				<!-- CTA -->
+				<button id="onboardingCloseBtn"
+					class="w-full rounded-2xl bg-white/95 px-4 py-3 text-[14px] font-semibold tracking-tight text-black/90 shadow-lg transition-all active:scale-[0.97] active:bg-white/80">
+					开始游戏
+				</button>
+
+			</div>
+		</div>
+
+		<div id="settingsOverlay" aria-hidden="true"
+			class="fixed inset-0 z-20 hidden items-center justify-center bg-black/40 p-5 backdrop-blur-xl">
+			<div id="settingsPanel" role="dialog" aria-modal="true"
+				class="w-[min(86vw,360px)] rounded-2xl border border-white/[0.14] bg-white/[0.08] p-4 text-[#f2f4f9] shadow-2xl backdrop-blur-2xl ring-1 ring-inset ring-white/[0.06]">
+				<div id="settingsPanelHead" class="mb-4 flex items-center justify-between">
+					<span class="text-base uppercase text-white/80">设置</span>
+					<button id="settingsCloseBtn"
+						class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/[0.08] text-sm text-white/60 transition-colors hover:bg-white/[0.14] hover:text-white/90"
+						aria-label="close">×</button>
+				</div>
+
+				<div id="settingsPanelBody" class="space-y-2.5 text-[13px]">
+					<div class="rounded-xl border border-white/[0.08] bg-white/[0.06] p-3">
+						<div class="mb-2.5 text-sm uppercase text-white/70">游戏难度</div>
+						<div class="grid grid-cols-3 gap-0.5 rounded-[10px] bg-black/30 p-1">
+							<button data-difficulty="easy"
+								class="difficulty-btn rounded-[8px] py-1.5 text-[12px] font-medium text-white/50 transition-all hover:text-white/80">简单</button>
+							<button data-difficulty="medium"
+								class="difficulty-btn rounded-[8px] bg-white/[0.14] py-1.5 text-[12px] font-medium text-white/90 shadow-sm ring-1 ring-inset ring-white/[0.16]">中等</button>
+							<button data-difficulty="hard"
+								class="difficulty-btn rounded-[8px] py-1.5 text-[12px] font-medium text-white/50 transition-all hover:text-white/80">困难</button>
+						</div>
+						<div id="difficultyMeta" class="hidden mt-2 text-[11px] leading-relaxed text-white/35">
+							{{difficultyMeta}}
+						</div>
+					</div>
+
+					<div class="rounded-xl border border-white/[0.08] bg-white/[0.06] p-3">
+						<div class="mb-2.5 text-sm uppercase text-white/70">飞镖盘大小</div>
+						<div class="grid grid-cols-3 gap-0.5 rounded-[10px] bg-black/30 p-1">
+							<button data-board-size="small"
+								class="board-size-btn rounded-[8px] py-1.5 text-[12px] font-medium text-white/50 transition-all hover:text-white/80">小</button>
+							<button data-board-size="medium"
+								class="board-size-btn rounded-[8px] bg-white/[0.14] py-1.5 text-[12px] font-medium text-white/90 shadow-sm ring-1 ring-inset ring-white/[0.16]">中</button>
+							<button data-board-size="large"
+								class="board-size-btn rounded-[8px] py-1.5 text-[12px] font-medium text-white/50 transition-all hover:text-white/80">大</button>
+						</div>
+						<div id="boardSizeMeta" class="hidden mt-2 text-[11px] leading-relaxed text-white/35">
+							{{boardSizeMeta}}
+						</div>
+					</div>
+
+					<div class="divide-y divide-white/[0.06] rounded-xl border border-white/[0.08] bg-white/[0.06]">
+						<label class="flex cursor-pointer items-center justify-between px-3.5 py-3">
+							<span class="text-sm text-white/70">音乐</span>
+							<div class="relative">
+								<input id="musicToggle" type="checkbox" class="peer sr-only" checked />
+								<div
+									class="h-[26px] w-[44px] rounded-full border border-white/10 bg-white/10 transition-all peer-checked:border-[#30d158]/40 peer-checked:bg-[#30d158]/70">
+								</div>
+								<div
+									class="absolute left-[3px] top-[3px] h-[20px] w-[20px] rounded-full bg-white/50 shadow transition-all peer-checked:translate-x-[18px] peer-checked:bg-white">
+								</div>
+							</div>
+						</label>
+						<label class="flex cursor-pointer items-center justify-between px-3.5 py-3">
+							<span class="text-sm text-white/70">音效</span>
+							<div class="relative">
+								<input id="sfxToggle" type="checkbox" class="peer sr-only" checked />
+								<div
+									class="h-[26px] w-[44px] rounded-full border border-white/10 bg-white/10 transition-all peer-checked:border-[#30d158]/40 peer-checked:bg-[#30d158]/70">
+								</div>
+								<div
+									class="absolute left-[3px] top-[3px] h-[20px] w-[20px] rounded-full bg-white/50 shadow transition-all peer-checked:translate-x-[18px] peer-checked:bg-white">
+								</div>
+							</div>
+						</label>
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+		<script type="module">
+			import * as THREE from "https://esm.sh/three@0.160.0";
+			import {
+				GLTFLoader
+			} from "https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
+
+			const State = Object.freeze({
+				Idle: "Idle",
+				Charging: "Charging",
+				Firing: "Firing",
+				Scored: "Scored"
+			});
+
+			const DIFFICULTY_PRESETS = {
+				easy: {
+					distance: 3.0,
+					k: 0.3
+				},
+				medium: {
+					distance: 4.5,
+					k: 0.8
+				},
+				hard: {
+					distance: 6.0,
+					k: 1.5
+				}
+			};
+			const BOARD_SIZE_PRESETS = {
+				small: 0.15,
+				medium: 0.2,
+				large: 0.25
+			};
+			const BOARD_STAND_PRESETS = {
+				easy: {
+					postThickness: 0.18,
+					postHeight: 1.7,
+					postY: -0.32,
+					baseInner: 0.7,
+					baseOuter: 0.85
+				},
+				medium: {
+					postThickness: 0.18,
+					postHeight: 1.7,
+					postY: -0.32,
+					baseInner: 0.7,
+					baseOuter: 0.85
+				},
+				hard: {
+					postThickness: 0.18,
+					postHeight: 1.7,
+					postY: -0.32,
+					baseInner: 0.7,
+					baseOuter: 0.85
+				}
+			};
+			let currentDifficulty = "medium";
+			let currentBoardSize = "medium";
+
+			let boardRadiusM = BOARD_SIZE_PRESETS[currentBoardSize];
+			let aimMax = boardRadiusM * 0.95;
+			const BOARD_CENTER_Y = 1.5;
+			const CAMERA_POS_Z = 0.0;
+			const CAMERA_NEAR = 0.03;
+			const DART_CAMERA_SAFE_GAP = 0.08;
+			let boardDistanceX = DIFFICULTY_PRESETS[currentDifficulty].distance;
+			let boardZ = boardDistanceX;
+			let crosshairZ = boardZ - 0.01;
+			const DART_IDLE_DISTANCE_FROM_CAMERA = 0.55;
+			const DART_IDLE_VIEW_OFFSET_X = -0.24;
+			const DART_IDLE_VIEW_OFFSET_Y = -0.18;
+			const DART_CHARGE_BACK_DISTANCE = 0.06;
+			let randomErrorK = DIFFICULTY_PRESETS[currentDifficulty].k;
+			const RETICLE_RANDOM_RADIUS = 0.2;
+			const CHARGE_SHAKE_CAP_POWER = 0.72;
+			const CAMERA_FOCAL_IDLE_MOBILE_MM = 50;
+			const CAMERA_FOCAL_CHARGING_MOBILE_MM = 35;
+			const CAMERA_FOCAL_IDLE_DESKTOP_MM = 35;
+			const CAMERA_FOCAL_CHARGING_DESKTOP_MM = 25;
+			const CAMERA_FOCAL_LERP_SPEED = 0.2;
+			const THROW_SPEED_MIN = 8.5;
+			const THROW_SPEED_MAX = 18.0;
+			const THROW_GRAVITY_Y = -8.6;
+			const THROW_MAX_TIME = 1.6;
+			const DROP_COMPENSATION_K = 0.9;
+			const DART_MODEL_SCALE = 0.18;
+			const DART_TIP_OFFSET = 0.455 * DART_MODEL_SCALE;
+			const DART_EMBED_DEPTH = 0.012;
+			const DART_TAIL_WOBBLE_MAX = 0.045;
+			const DART_TAIL_WOBBLE_HZ = 21;
+			const FLOOR_Y = 0.0;
+			const SHOWROOM_PATH = "./showroom1.glb";
+			const SHOWROOM_SCALE = 1.0;
+			const SHOWROOM_CENTER_Z = 2.25;
+			const SHOWROOM_ROTATION_DEG = new THREE.Vector3(0, -90, 0);
+			const SHOWROOM_OFFSET_PRESETS = {
+				easy: new THREE.Vector3(-0.8, 0.245, 0.0),
+				medium: new THREE.Vector3(-0.8, 0.245, 1.0),
+				hard: new THREE.Vector3(-0.8, 0.245, 2.0)
+			};
+			let currentShowroomOffset = SHOWROOM_OFFSET_PRESETS[currentDifficulty].clone();
+			const HDR_ENV_PATH = "./hdr1.jpg";
+			const HDR_ENV_ROTATION_DEG = -90;
+			const MUSIC_PATH = "./music.mp3";
+			let musicEnabled = true;
+			let sfxEnabled = true;
+
+			let state = State.Idle;
+			let stateEnteredAt = performance.now();
+
+			const renderer = new THREE.WebGLRenderer({
+				antialias: true,
+				alpha: true
+			});
+			renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+			renderer.outputColorSpace = THREE.SRGBColorSpace;
+			renderer.shadowMap.enabled = true;
+			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+			renderer.domElement.style.display = "block";
+			renderer.domElement.style.position = "fixed";
+			renderer.domElement.style.left = "0";
+			renderer.domElement.style.top = "0";
+			renderer.domElement.style.touchAction = "none";
+			renderer.domElement.style.userSelect = "none";
+			renderer.domElement.style.webkitUserSelect = "none";
+			renderer.domElement.style.webkitTouchCallout = "none";
+			document.body.appendChild(renderer.domElement);
+
+			const scene = new THREE.Scene();
+			scene.background = new THREE.Color(0x0f1117);
+			const envTex = new THREE.TextureLoader().load(HDR_ENV_PATH, (tex) => {
+				tex.mapping = THREE.EquirectangularReflectionMapping;
+				tex.colorSpace = THREE.SRGBColorSpace;
+				scene.environment = tex;
+				if (scene.environmentRotation) {
+					scene.environmentRotation.set(0, THREE.MathUtils.degToRad(HDR_ENV_ROTATION_DEG), 0);
+				}
+			});
+			envTex.mapping = THREE.EquirectangularReflectionMapping;
+
+			const camera = new THREE.PerspectiveCamera(38, 1, CAMERA_NEAR, 50);
+			camera.position.set(0, BOARD_CENTER_Y, CAMERA_POS_Z);
+			camera.lookAt(0, BOARD_CENTER_Y, boardZ);
+			const isTouchDevice = matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
+			const focalIdleMm = isTouchDevice ? CAMERA_FOCAL_IDLE_MOBILE_MM : CAMERA_FOCAL_IDLE_DESKTOP_MM;
+			const focalChargingMm = isTouchDevice ? CAMERA_FOCAL_CHARGING_MOBILE_MM : CAMERA_FOCAL_CHARGING_DESKTOP_MM;
+			camera.setFocalLength(focalIdleMm);
+			const dartIdlePos = new THREE.Vector3();
+
+			function syncViewportSize() {
+				const vv = window.visualViewport;
+				const w = Math.max(1, Math.round(vv ? vv.width : window.innerWidth));
+				const h = Math.max(1, Math.round(vv ? vv.height : window.innerHeight));
+				renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+				renderer.setSize(w, h, false);
+				renderer.domElement.style.width = `${w}px`;
+				renderer.domElement.style.height = `${h}px`;
+				camera.aspect = w / h;
+				camera.updateProjectionMatrix();
+				updateDartIdleAnchor();
+			}
+			syncViewportSize();
+
+			scene.add(new THREE.AmbientLight(0xffffff, 0.92));
+			const key = new THREE.DirectionalLight(0xffffff, 0.45);
+			key.position.set(1.8, 2.4, 5.8);
+			key.castShadow = true;
+			key.shadow.mapSize.set(1024, 1024);
+			key.shadow.camera.near = 0.1;
+			key.shadow.camera.far = 30;
+			key.shadow.camera.left = -6;
+			key.shadow.camera.right = 6;
+			key.shadow.camera.top = 6;
+			key.shadow.camera.bottom = -6;
+			scene.add(key);
+
+			const floor = new THREE.Mesh(
+				new THREE.PlaneGeometry(20, 20),
+				new THREE.MeshStandardMaterial({
+					color: 0x2a2f3a,
+					roughness: 0.92,
+					metalness: 0.04
+				})
+			);
+			floor.rotation.x = -Math.PI * 0.5;
+			floor.position.y = FLOOR_Y;
+			floor.position.z = boardZ * 0.5;
+			floor.receiveShadow = true;
+			scene.add(floor);
+
+			const rug = new THREE.Mesh(
+				new THREE.CircleGeometry(2.4, 48),
+				new THREE.MeshStandardMaterial({
+					color: 0x3a404d,
+					roughness: 0.95,
+					metalness: 0.02
+				})
+			);
+			rug.rotation.x = -Math.PI * 0.5;
+			rug.position.y = FLOOR_Y + 0.003;
+			rug.position.z = boardZ * 0.35;
+			scene.add(rug);
+
+			const backWall = new THREE.Mesh(
+				new THREE.PlaneGeometry(14, 8),
+				new THREE.MeshStandardMaterial({
+					color: 0x202532,
+					roughness: 0.88,
+					metalness: 0.03
+				})
+			);
+			backWall.position.set(0, BOARD_CENTER_Y, boardZ + 1.2);
+			scene.add(backWall);
+
+			let showroom = null;
+			const gltfLoader = new GLTFLoader();
+
+			function placeShowroom() {
+				if (!showroom) return;
+				showroom.position.set(0, 0, 0);
+				showroom.rotation.set(
+					THREE.MathUtils.degToRad(SHOWROOM_ROTATION_DEG.x),
+					THREE.MathUtils.degToRad(SHOWROOM_ROTATION_DEG.y),
+					THREE.MathUtils.degToRad(SHOWROOM_ROTATION_DEG.z)
+				);
+				showroom.updateMatrixWorld(true);
+				const box = new THREE.Box3().setFromObject(showroom);
+				const center = box.getCenter(new THREE.Vector3());
+				showroom.position.set(
+					-center.x + currentShowroomOffset.x,
+					FLOOR_Y - box.min.y + currentShowroomOffset.y,
+					SHOWROOM_CENTER_Z - center.z + currentShowroomOffset.z
+				);
+				showroom.updateMatrixWorld(true);
+			}
+
+			function loadShowroom() {
+				gltfLoader.load(
+					SHOWROOM_PATH,
+					(gltf) => {
+						showroom = gltf.scene;
+						showroom.name = "showroom";
+						showroom.traverse((obj) => {
+							if (obj.isMesh && obj.material) {
+								obj.castShadow = true;
+								obj.receiveShadow = true;
+								if (Array.isArray(obj.material)) {
+									obj.material.forEach((m) => {
+										if (!m) return;
+										m.transparent = false;
+										m.opacity = 1;
+										m.depthWrite = true;
+										m.side = THREE.DoubleSide;
+									});
+								} else {
+									obj.material.transparent = false;
+									obj.material.opacity = 1;
+									obj.material.depthWrite = true;
+									obj.material.side = THREE.DoubleSide;
+								}
+							}
+						});
+						scene.add(showroom);
+
+						showroom.scale.setScalar(SHOWROOM_SCALE);
+						placeShowroom();
+						floor.visible = false;
+						rug.visible = false;
+						backWall.visible = false;
+					},
+					undefined,
+					(err) => {
+						console.warn("Failed to load showroom.glb", err);
+					}
+				);
+			}
+			loadShowroom();
+
+			const boardGroup = new THREE.Group();
+			boardGroup.position.set(0, BOARD_CENTER_Y, boardZ);
+			boardGroup.castShadow = true;
+			boardGroup.receiveShadow = true;
+			scene.add(boardGroup);
+
+			const boardPost = new THREE.Mesh(
+				new THREE.CylinderGeometry(
+					boardRadiusM * BOARD_STAND_PRESETS[currentDifficulty].postThickness,
+					boardRadiusM * BOARD_STAND_PRESETS[currentDifficulty].postThickness,
+					BOARD_STAND_PRESETS[currentDifficulty].postHeight,
+					24
+				),
+				new THREE.MeshStandardMaterial({
+					color: 0xe8edf5,
+					roughness: 0.06,
+					metalness: 1.0
+				})
+			);
+			boardPost.position.set(0, BOARD_STAND_PRESETS[currentDifficulty].postY, 0.72);
+			boardPost.castShadow = true;
+			boardPost.receiveShadow = true;
+			boardGroup.add(boardPost);
+
+			const boardBase = new THREE.Mesh(
+				new THREE.CylinderGeometry(
+					boardRadiusM * BOARD_STAND_PRESETS[currentDifficulty].baseInner,
+					boardRadiusM * BOARD_STAND_PRESETS[currentDifficulty].baseOuter,
+					0.1,
+					24
+				),
+				new THREE.MeshStandardMaterial({
+					color: 0xe8edf5,
+					roughness: 0.06,
+					metalness: 1.0
+				})
+			);
+			boardBase.position.set(0, -1.2, 0.72);
+			boardBase.castShadow = true;
+			boardBase.receiveShadow = true;
+			boardGroup.add(boardBase);
+
+			const boardBody = new THREE.Mesh(
+				new THREE.CylinderGeometry(boardRadiusM * 1.04, boardRadiusM * 1.04, 0.018, 96),
+				new THREE.MeshStandardMaterial({
+					color: 0x1c1f2a,
+					roughness: 0.9,
+					metalness: 0.06
+				})
+			);
+			boardBody.rotation.x = Math.PI / 2;
+			boardBody.position.z = 0.009;
+			boardBody.castShadow = true;
+			boardBody.receiveShadow = true;
+			boardGroup.add(boardBody);
+
+			const boardFaceMat = new THREE.MeshBasicMaterial({
+				transparent: false,
+				side: THREE.FrontSide
+			});
+			const boardFace = new THREE.Mesh(new THREE.CircleGeometry(boardRadiusM, 96), boardFaceMat);
+			boardFace.position.z = -0.001;
+			boardFace.rotation.y = Math.PI;
+			boardGroup.add(boardFace);
+
+			const boardEdge = new THREE.Mesh(
+				new THREE.RingGeometry(boardRadiusM, boardRadiusM * 1.03, 96),
+				new THREE.MeshBasicMaterial({
+					color: 0x101217,
+					transparent: true,
+					opacity: 0.9,
+					side: THREE.DoubleSide
+				})
+			);
+			boardEdge.position.z = -0.0002;
+			boardGroup.add(boardEdge);
+
+			const crosshairGroup = new THREE.Group();
+			const crosshairRing = new THREE.Mesh(
+				new THREE.RingGeometry(boardRadiusM * 0.08, boardRadiusM * 0.095, 48),
+				new THREE.MeshBasicMaterial({
+					color: 0xffffff,
+					transparent: true,
+					opacity: 0.95,
+					side: THREE.DoubleSide
+				})
+			);
+			const crosshairDot = new THREE.Mesh(
+				new THREE.CircleGeometry(boardRadiusM * 0.015, 32),
+				new THREE.MeshBasicMaterial({
+					color: 0xffffff,
+					transparent: true,
+					opacity: 0.98
+				})
+			);
+			crosshairGroup.add(crosshairRing);
+			crosshairGroup.add(crosshairDot);
+			const crosshairLineMat = new THREE.MeshBasicMaterial({
+				color: 0xffffff,
+				transparent: true,
+				opacity: 0.95
+			});
+			const topLine = new THREE.Mesh(new THREE.PlaneGeometry(boardRadiusM * 0.008, boardRadiusM * 0.05), crosshairLineMat);
+			const bottomLine = new THREE.Mesh(new THREE.PlaneGeometry(boardRadiusM * 0.008, boardRadiusM * 0.05),
+				crosshairLineMat);
+			const leftLine = new THREE.Mesh(new THREE.PlaneGeometry(boardRadiusM * 0.05, boardRadiusM * 0.008),
+				crosshairLineMat);
+			const rightLine = new THREE.Mesh(new THREE.PlaneGeometry(boardRadiusM * 0.05, boardRadiusM * 0.008),
+				crosshairLineMat);
+			topLine.position.y = boardRadiusM * 0.135;
+			bottomLine.position.y = -boardRadiusM * 0.135;
+			leftLine.position.x = -boardRadiusM * 0.135;
+			rightLine.position.x = boardRadiusM * 0.135;
+			crosshairGroup.add(topLine);
+			crosshairGroup.add(bottomLine);
+			crosshairGroup.add(leftLine);
+			crosshairGroup.add(rightLine);
+			for (const c of crosshairGroup.children) {
+				if (c.material) c.material.depthTest = false;
+				c.renderOrder = 999;
+			}
+			crosshairGroup.visible = false;
+			scene.add(crosshairGroup);
+
+			function applyBoardSize(radius) {
+				boardRadiusM = radius;
+				aimMax = boardRadiusM * 0.95;
+				const stand = BOARD_STAND_PRESETS[currentDifficulty];
+				boardPost.geometry.dispose();
+				boardPost.geometry = new THREE.CylinderGeometry(
+					boardRadiusM * stand.postThickness,
+					boardRadiusM * stand.postThickness,
+					stand.postHeight,
+					24
+				);
+				boardPost.position.y = stand.postY;
+				boardBase.geometry.dispose();
+				boardBase.geometry = new THREE.CylinderGeometry(boardRadiusM * stand.baseInner, boardRadiusM * stand.baseOuter,
+					0.1, 24);
+				boardBody.geometry.dispose();
+				boardBody.geometry = new THREE.CylinderGeometry(boardRadiusM * 1.04, boardRadiusM * 1.04, 0.018, 96);
+				boardFace.geometry.dispose();
+				boardFace.geometry = new THREE.CircleGeometry(boardRadiusM, 96);
+				boardEdge.geometry.dispose();
+				boardEdge.geometry = new THREE.RingGeometry(boardRadiusM, boardRadiusM * 1.03, 96);
+				crosshairRing.geometry.dispose();
+				crosshairRing.geometry = new THREE.RingGeometry(boardRadiusM * 0.08, boardRadiusM * 0.095, 48);
+				crosshairDot.geometry.dispose();
+				crosshairDot.geometry = new THREE.CircleGeometry(boardRadiusM * 0.015, 32);
+				topLine.geometry.dispose();
+				bottomLine.geometry.dispose();
+				leftLine.geometry.dispose();
+				rightLine.geometry.dispose();
+				topLine.geometry = new THREE.PlaneGeometry(boardRadiusM * 0.008, boardRadiusM * 0.05);
+				bottomLine.geometry = new THREE.PlaneGeometry(boardRadiusM * 0.008, boardRadiusM * 0.05);
+				leftLine.geometry = new THREE.PlaneGeometry(boardRadiusM * 0.05, boardRadiusM * 0.008);
+				rightLine.geometry = new THREE.PlaneGeometry(boardRadiusM * 0.05, boardRadiusM * 0.008);
+				topLine.position.y = boardRadiusM * 0.135;
+				bottomLine.position.y = -boardRadiusM * 0.135;
+				leftLine.position.x = -boardRadiusM * 0.135;
+				rightLine.position.x = boardRadiusM * 0.135;
+			}
+
+			function applyDistanceAndDifficulty(distance, k) {
+				boardDistanceX = distance;
+				boardZ = boardDistanceX;
+				crosshairZ = boardZ - 0.01;
+				randomErrorK = k;
+				boardGroup.position.set(0, BOARD_CENTER_Y, boardZ);
+				key.target.position.set(0, BOARD_CENTER_Y, boardZ);
+				floor.position.z = boardZ * 0.5;
+				rug.position.z = boardZ * 0.35;
+				backWall.position.set(0, BOARD_CENTER_Y, boardZ + 1.2);
+				camera.lookAt(0, BOARD_CENTER_Y, boardZ);
+				placeShowroom();
+			}
+
+			function updateDartIdleAnchor() {
+				const vFov = THREE.MathUtils.degToRad(camera.fov);
+				const halfHeight = Math.tan(vFov * 0.5) * DART_IDLE_DISTANCE_FROM_CAMERA;
+				const halfWidth = halfHeight * camera.aspect;
+				const safeYOffset = Math.min(halfHeight * 0.45, 0.22);
+				const x = THREE.MathUtils.clamp(DART_IDLE_VIEW_OFFSET_X, -halfWidth * 0.8, halfWidth * 0.8);
+				const y = BOARD_CENTER_Y - safeYOffset + THREE.MathUtils.clamp(DART_IDLE_VIEW_OFFSET_Y, -halfHeight * 0.35,
+					halfHeight * 0.1);
+				dartIdlePos.set(x, y, CAMERA_POS_Z + DART_IDLE_DISTANCE_FROM_CAMERA);
+			}
+			updateDartIdleAnchor();
+
+			function createDart() {
+				const g = new THREE.Group();
+
+				const shaft = new THREE.Mesh(
+					new THREE.CylinderGeometry(0.026, 0.03, 0.58, 20),
+					new THREE.MeshStandardMaterial({
+						color: 0xc6ccd8,
+						roughness: 0.36,
+						metalness: 0.52
+					})
+				);
+				shaft.rotation.x = Math.PI / 2;
+				g.add(shaft);
+
+				const tip = new THREE.Mesh(
+					new THREE.ConeGeometry(0.018, 0.17, 18),
+					new THREE.MeshStandardMaterial({
+						color: 0xf2f5fa,
+						roughness: 0.24,
+						metalness: 0.78
+					})
+				);
+				tip.rotation.x = Math.PI / 2;
+				tip.position.z = 0.37;
+				g.add(tip);
+
+				const tail = new THREE.Mesh(
+					new THREE.CylinderGeometry(0.04, 0.04, 0.08, 16),
+					new THREE.MeshStandardMaterial({
+						color: 0x57607a,
+						roughness: 0.58,
+						metalness: 0.2
+					})
+				);
+				tail.rotation.x = Math.PI / 2;
+				tail.position.z = -0.31;
+				g.add(tail);
+
+				const finGeo = new THREE.BoxGeometry(0.14, 0.055, 0.012);
+				const finMat = new THREE.MeshStandardMaterial({
+					color: 0xf6bc45,
+					roughness: 0.7,
+					metalness: 0.06
+				});
+				for (let i = 0; i < 4; i++) {
+					const fin = new THREE.Mesh(finGeo, finMat);
+					fin.position.z = -0.41;
+					fin.rotation.z = i * Math.PI * 0.5;
+					g.add(fin);
+				}
+
+				g.position.copy(dartIdlePos);
+				g.scale.setScalar(DART_MODEL_SCALE);
+				g.traverse((obj) => {
+					if (obj.isMesh) {
+						obj.castShadow = true;
+						obj.receiveShadow = true;
+					}
+				});
+				return g;
+			}
+
+			let dart = createDart();
+			scene.add(dart);
+
+			let aimX = 0;
+			let aimY = 0;
+			let activePointerId = null;
+			let chargeStart = 0;
+			let chargePowerRaw = 0;
+			let chargePower = 0;
+
+			let firePower = 0;
+			let resolvedHitX = 0;
+			let resolvedHitY = 0;
+			const dartVelocity = new THREE.Vector3();
+			let fireElapsed = 0;
+
+			let boardPulse = 1;
+			let scoredUntil = 0;
+
+			let totalScore = 0;
+			let lastScore = 0;
+			const stuckTipPoint = new THREE.Vector3();
+			const stuckBaseQuat = new THREE.Quaternion();
+			const stuckLocalTipAxis = new THREE.Vector3(0, 0, 1);
+			let stuckStartMs = 0;
+			let hasStuckHit = false;
+			let missDropping = false;
+			let missLandedAt = 0;
+
+			const lastScoreEl = document.getElementById("lastScore");
+			const totalScoreEl = document.getElementById("totalScore");
+
+			function setScores(last, total) {
+				lastScoreEl.textContent = String(last);
+				totalScoreEl.textContent = String(total);
+			}
+			setScores(0, 0);
+
+			function setState(next) {
+				state = next;
+				stateEnteredAt = performance.now();
+			}
+
+			function clampAim() {
+				aimX = THREE.MathUtils.clamp(aimX, -aimMax, aimMax);
+				aimY = THREE.MathUtils.clamp(aimY, -aimMax, aimMax);
+			}
+
+			function moveAimBy(dx, dy, currentState) {
+				const damping = currentState === State.Charging ? 0.35 : 1.0;
+				const s = 0.0032;
+				aimX -= dx * s * damping;
+				aimY -= dy * s * damping;
+				clampAim();
+			}
+
+			function updateCrosshair() {
+				crosshairGroup.position.set(aimX, BOARD_CENTER_Y + aimY, crosshairZ);
+				crosshairGroup.visible = state === State.Charging;
+			}
+
+			function randomizeAimInRadius(radius) {
+				const a = Math.random() * Math.PI * 2;
+				const r = Math.sqrt(Math.random()) * radius;
+				aimX += Math.cos(a) * r;
+				aimY += Math.sin(a) * r;
+				clampAim();
+			}
+
+			function randn() {
+				let u = 0;
+				let v = 0;
+				while (u === 0) u = Math.random();
+				while (v === 0) v = Math.random();
+				return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+			}
+
+			function easeOutQuad(t) {
+				return 1 - (1 - t) * (1 - t);
+			}
+
+			const sectorOrder = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+
+			function scoreAt(localX, localY) {
+				const d = Math.sqrt(localX * localX + localY * localY) / boardRadiusM;
+				if (d > 1.0) return 0;
+				if (d <= 0.045) return 50;
+				if (d <= 0.1) return 25;
+
+				const theta = (Math.PI / 2 - Math.atan2(localY, localX) + Math.PI * 2) % (Math.PI * 2);
+				const index = Math.floor(theta / (Math.PI * 2 / 20));
+				const base = sectorOrder[index];
+
+				if (d >= 0.56 && d <= 0.62) return base * 3;
+				if (d >= 0.9 && d <= 0.98) return base * 2;
+				return base;
+			}
+
+			function applyHitResult(hitX, hitY, impactDir) {
+				const localX = hitX;
+				const localY = hitY - BOARD_CENTER_Y;
+				const hitScore = scoreAt(localX, localY);
+				lastScore = hitScore;
+				totalScore += hitScore;
+				setScores(lastScore, totalScore);
+
+				const inDir = impactDir && impactDir.lengthSq() > 1e-6 ?
+					impactDir.clone().normalize() :
+					new THREE.Vector3(0, 0, -1);
+				stuckTipPoint.set(hitX, hitY, boardZ + 0.004).addScaledVector(inDir, DART_EMBED_DEPTH);
+				stuckBaseQuat.setFromUnitVectors(stuckLocalTipAxis, inDir);
+				stuckStartMs = performance.now();
+				hasStuckHit = true;
+				dart.quaternion.copy(stuckBaseQuat);
+				const tipAxisWorld = stuckLocalTipAxis.clone().applyQuaternion(dart.quaternion);
+				dart.position.copy(stuckTipPoint).addScaledVector(tipAxisWorld, -DART_TIP_OFFSET);
+
+				boardPulse = 1.02;
+				playHitSound(hitScore >= 25);
+
+				scoredUntil = performance.now() + 800;
+				setState(State.Scored);
+			}
+
+			function resetForNext() {
+				scene.remove(dart);
+				dart = createDart();
+				scene.add(dart);
+				chargePowerRaw = 0;
+				chargePower = 0;
+				dartVelocity.set(0, 0, 0);
+				fireElapsed = 0;
+				hasStuckHit = false;
+				missDropping = false;
+				missLandedAt = 0;
+				setState(State.Idle);
+			}
+
+			function applyMissResult() {
+				lastScore = 0;
+				setScores(lastScore, totalScore);
+				hasStuckHit = false;
+				missDropping = true;
+				missLandedAt = 0;
+				scoredUntil = performance.now() + 1200;
+				setState(State.Scored);
+			}
+
+			function startFire(nowMs) {
+				chargePowerRaw = THREE.MathUtils.clamp((nowMs - chargeStart) / 1200, 0, 1);
+				chargePower = easeOutQuad(chargePowerRaw);
+
+				const sigma = (0.052 - 0.038 * chargePower) * randomErrorK;
+				resolvedHitX = THREE.MathUtils.clamp(aimX + randn() * sigma, -1.05, 1.05);
+				resolvedHitY = THREE.MathUtils.clamp(aimY + randn() * sigma, -1.05, 1.05);
+
+				firePower = chargePower;
+				fireElapsed = 0;
+				const launchTarget = new THREE.Vector3(resolvedHitX, BOARD_CENTER_Y + resolvedHitY, boardZ + 0.004);
+				const launchSpeed = THREE.MathUtils.lerp(THROW_SPEED_MIN, THROW_SPEED_MAX, firePower);
+				const toTarget = launchTarget.clone().sub(dart.position);
+				const horizontalDistance = Math.sqrt(toTarget.x * toTarget.x + toTarget.z * toTarget.z);
+				const estTime = THREE.MathUtils.clamp(horizontalDistance / Math.max(launchSpeed, 0.001), 0.08, 1.6);
+				const dropCompensation = -0.5 * THROW_GRAVITY_Y * estTime * estTime * DROP_COMPENSATION_K;
+				launchTarget.y += dropCompensation;
+				const launchDir = launchTarget.clone().sub(dart.position).normalize();
+				dartVelocity.copy(launchDir.multiplyScalar(launchSpeed));
+
+				stopChargeTone();
+				playThrowWhoosh(chargePower);
+				setState(State.Firing);
+			}
+
+			const pointerPrev = new Map();
+
+			function onPointerDown(e) {
+				if (state !== State.Idle) return;
+				activePointerId = e.pointerId;
+				renderer.domElement.setPointerCapture(e.pointerId);
+				pointerPrev.set(e.pointerId, {
+					x: e.clientX,
+					y: e.clientY
+				});
+				chargeStart = performance.now();
+				chargePowerRaw = 0;
+				chargePower = 0;
+				randomizeAimInRadius(RETICLE_RANDOM_RADIUS * boardRadiusM);
+				resumeAudio();
+				startChargeTone();
+				setState(State.Charging);
+			}
+
+			function onPointerMove(e) {
+				const prev = pointerPrev.get(e.pointerId) || {
+					x: e.clientX,
+					y: e.clientY
+				};
+				const dx = e.clientX - prev.x;
+				const dy = e.clientY - prev.y;
+				pointerPrev.set(e.pointerId, {
+					x: e.clientX,
+					y: e.clientY
+				});
+
+				if (state === State.Idle) {
+					moveAimBy(dx, dy, State.Idle);
+				} else if (state === State.Charging && e.pointerId === activePointerId) {
+					moveAimBy(dx, dy, State.Charging);
+				}
+			}
+
+			function releaseCharge(e) {
+				if (state !== State.Charging) return;
+				if (activePointerId !== null && e.pointerId !== activePointerId) return;
+				if (activePointerId !== null && renderer.domElement.hasPointerCapture(activePointerId)) {
+					renderer.domElement.releasePointerCapture(activePointerId);
+				}
+				activePointerId = null;
+				startFire(performance.now());
+			}
+
+			renderer.domElement.addEventListener("pointerdown", onPointerDown, {
+				passive: true
+			});
+			renderer.domElement.addEventListener("pointermove", onPointerMove, {
+				passive: true
+			});
+			renderer.domElement.addEventListener("pointerup", releaseCharge, {
+				passive: true
+			});
+			renderer.domElement.addEventListener("pointercancel", releaseCharge, {
+				passive: true
+			});
+			renderer.domElement.addEventListener("pointerleave", releaseCharge, {
+				passive: true
+			});
+
+			function resetAll() {
+				totalScore = 0;
+				lastScore = 0;
+				aimX = 0;
+				aimY = 0;
+				updateDartIdleAnchor();
+				setScores(0, 0);
+				stopChargeTone();
+				activePointerId = null;
+				pointerPrev.clear();
+				boardPulse = 1;
+				resetForNext();
+			}
+
+			const uploadBtn = document.getElementById("uploadBtn");
+			const settingsBtn = document.getElementById("settingsBtn");
+			const onboardingOverlay = document.getElementById("onboardingOverlay");
+			const onboardingCloseBtn = document.getElementById("onboardingCloseBtn");
+			const settingsOverlay = document.getElementById("settingsOverlay");
+			const settingsPanel = document.getElementById("settingsPanel");
+			const settingsCloseBtn = document.getElementById("settingsCloseBtn");
+			const settingsPanelBody = document.getElementById("settingsPanelBody");
+			const fileInput = document.getElementById("fileInput");
+			const ONBOARDING_STORAGE_KEY = "dartGameOnboardingSeenV1";
+
+			settingsPanel.classList.add("backdrop-blur-xl", "bg-white/10", "border-white/25",
+				"shadow-[0_24px_60px_rgba(0,0,0,0.45)]");
+
+			const musicToggle = document.getElementById("musicToggle");
+			const sfxToggle = document.getElementById("sfxToggle");
+			const difficultyMeta = document.getElementById("difficultyMeta");
+			const boardSizeMeta = document.getElementById("boardSizeMeta");
+			const difficultyButtons = Array.from(document.querySelectorAll(".difficulty-btn"));
+			const boardSizeButtons = Array.from(document.querySelectorAll(".board-size-btn"));
+
+			function refreshSettingsUI() {
+				difficultyButtons.forEach((btn) => {
+					const active = btn.dataset.difficulty === currentDifficulty;
+					btn.className = active ?
+						"difficulty-btn rounded-lg px-2 py-1.5 text-xs bg-white text-black" :
+						"difficulty-btn rounded-lg px-2 py-1.5 text-xs text-white/75";
+				});
+				boardSizeButtons.forEach((btn) => {
+					const active = btn.dataset.boardSize === currentBoardSize;
+					btn.className = active ?
+						"board-size-btn rounded-lg px-2 py-1.5 text-xs bg-white text-black" :
+						"board-size-btn rounded-lg px-2 py-1.5 text-xs text-white/75";
+				});
+				const d = DIFFICULTY_PRESETS[currentDifficulty];
+				difficultyMeta.textContent = `x=${d.distance}m  |  k=${d.k}`;
+				const radius = BOARD_SIZE_PRESETS[currentBoardSize];
+				boardSizeMeta.textContent = `鍗婂緞=${Math.round(radius * 100)}cm  |  鐩村緞=${Math.round(radius * 200)}cm`;
+				musicToggle.checked = musicEnabled;
+				sfxToggle.checked = sfxEnabled;
+			}
+
+			function applyDifficultyLevel(level) {
+				currentDifficulty = level;
+				const preset = DIFFICULTY_PRESETS[level];
+				currentShowroomOffset.copy(SHOWROOM_OFFSET_PRESETS[level]);
+				applyDistanceAndDifficulty(preset.distance, preset.k);
+				applyBoardSize(boardRadiusM);
+				refreshSettingsUI();
+			}
+
+			function applyBoardSizeLevel(size) {
+				currentBoardSize = size;
+				applyBoardSize(BOARD_SIZE_PRESETS[size]);
+				refreshSettingsUI();
+			}
+
+			difficultyButtons.forEach((btn) => {
+				btn.addEventListener("click", () => applyDifficultyLevel(btn.dataset.difficulty));
+			});
+			boardSizeButtons.forEach((btn) => {
+				btn.addEventListener("click", () => applyBoardSizeLevel(btn.dataset.boardSize));
+			});
+
+			function showOnboarding() {
+				onboardingOverlay.classList.remove("hidden");
+				onboardingOverlay.classList.add("flex");
+				onboardingOverlay.setAttribute("aria-hidden", "false");
+			}
+
+			function hideOnboarding() {
+				onboardingOverlay.classList.remove("flex");
+				onboardingOverlay.classList.add("hidden");
+				onboardingOverlay.setAttribute("aria-hidden", "true");
+			}
+
+			function initOnboarding() {
+				let seen = false;
+				try {
+					seen = localStorage.getItem(ONBOARDING_STORAGE_KEY) === "1";
+				} catch (_err) {}
+				if (!seen) showOnboarding();
+			}
+
+			onboardingCloseBtn.addEventListener("click", () => {
+				try {
+					localStorage.setItem(ONBOARDING_STORAGE_KEY, "1");
+				} catch (_err) {}
+				hideOnboarding();
+			});
+
+			onboardingOverlay.addEventListener("click", (e) => {
+				if (e.target !== onboardingOverlay) return;
+				try {
+					localStorage.setItem(ONBOARDING_STORAGE_KEY, "1");
+				} catch (_err) {}
+				hideOnboarding();
+			});
+
+			initOnboarding();
+
+			uploadBtn.addEventListener("click", () => fileInput.click());
+			settingsBtn.addEventListener("click", () => {
+				settingsOverlay.classList.remove("hidden");
+				settingsOverlay.classList.add("flex");
+				settingsOverlay.setAttribute("aria-hidden", "false");
+			});
+			settingsCloseBtn.addEventListener("click", () => {
+				settingsOverlay.classList.remove("flex");
+				settingsOverlay.classList.add("hidden");
+				settingsOverlay.setAttribute("aria-hidden", "true");
+			});
+			settingsOverlay.addEventListener("click", (e) => {
+				if (e.target === settingsOverlay) {
+					settingsOverlay.classList.remove("flex");
+					settingsOverlay.classList.add("hidden");
+					settingsOverlay.setAttribute("aria-hidden", "true");
+				}
+			});
+			musicToggle.addEventListener("change", () => {
+				musicEnabled = musicToggle.checked;
+				if (musicEnabled) {
+					resumeAudio();
+					bgm.play().catch(() => {});
+				} else {
+					bgm.pause();
+				}
+			});
+			sfxToggle.addEventListener("change", () => {
+				sfxEnabled = sfxToggle.checked;
+				if (!sfxEnabled) stopChargeTone();
+			});
+			applyBoardSize(BOARD_SIZE_PRESETS[currentBoardSize]);
+			applyDistanceAndDifficulty(DIFFICULTY_PRESETS[currentDifficulty].distance, DIFFICULTY_PRESETS[currentDifficulty].k);
+			refreshSettingsUI();
+
+			function loadImageFromFile(file) {
+				return new Promise((resolve, reject) => {
+					const img = new Image();
+					img.onload = () => resolve(img);
+					img.onerror = reject;
+					img.src = URL.createObjectURL(file);
+				});
+			}
+
+			function drawSectorOverlay(ctx, size) {
+				const c = size * 0.5;
+				const R = size * 0.5;
+				const sectorAngle = (Math.PI * 2) / 20;
+				for (let i = 0; i < 20; i++) {
+					const a0 = -Math.PI / 2 + i * sectorAngle;
+					const a1 = a0 + sectorAngle;
+					ctx.beginPath();
+					ctx.moveTo(c, c);
+					ctx.arc(c, c, R, a0, a1);
+					ctx.closePath();
+					const white = i % 2 === 0;
+					ctx.fillStyle = white ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.18)";
+					ctx.fill();
+				}
+			}
+
+			function drawTopRings(ctx, size) {
+				const c = size * 0.5;
+				const R = size * 0.5;
+				const radii = [0.045, 0.10, 0.56, 0.62, 0.90, 0.98, 1.0];
+
+				ctx.strokeStyle = "rgba(255,255,255,0.9)";
+				ctx.lineWidth = Math.max(2, size * 0.0024);
+				for (const rr of radii) {
+					ctx.beginPath();
+					ctx.arc(c, c, R * rr, 0, Math.PI * 2);
+					ctx.stroke();
+				}
+
+				const sectorAngle = (Math.PI * 2) / 20;
+				for (let i = 0; i < 20; i++) {
+					const a = -Math.PI / 2 + i * sectorAngle;
+					const x = c + Math.cos(a) * R;
+					const y = c + Math.sin(a) * R;
+					ctx.beginPath();
+					ctx.moveTo(c, c);
+					ctx.lineTo(x, y);
+					ctx.stroke();
+				}
+			}
+
+			function buildBoardTexture(userImg) {
+				const size = 1024;
+				const canvas = document.createElement("canvas");
+				canvas.width = size;
+				canvas.height = size;
+				const ctx = canvas.getContext("2d");
+
+				ctx.clearRect(0, 0, size, size);
+
+				if (userImg) {
+					const sw = userImg.naturalWidth;
+					const sh = userImg.naturalHeight;
+					const side = Math.min(sw, sh);
+					const sx = (sw - side) * 0.5;
+					const sy = (sh - side) * 0.5;
+					ctx.drawImage(userImg, sx, sy, side, side, 0, 0, size, size);
+				} else {
+					const g = ctx.createLinearGradient(0, 0, size, size);
+					g.addColorStop(0, "#2f3343");
+					g.addColorStop(1, "#171b28");
+					ctx.fillStyle = g;
+					ctx.fillRect(0, 0, size, size);
+				}
+
+				drawSectorOverlay(ctx, size);
+				drawTopRings(ctx, size);
+
+				const tex = new THREE.CanvasTexture(canvas);
+				tex.flipY = false;
+				tex.repeat.set(1, -1);
+				tex.offset.set(0, 1);
+				tex.colorSpace = THREE.SRGBColorSpace;
+				tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+				tex.needsUpdate = true;
+				return tex;
+			}
+
+			async function onUploadChanged(e) {
+				const file = e.target.files && e.target.files[0];
+				if (!file) return;
+				try {
+					const img = await loadImageFromFile(file);
+					const tex = buildBoardTexture(img);
+					boardFaceMat.map = tex;
+					boardFaceMat.needsUpdate = true;
+				} catch (_err) {} finally {
+					fileInput.value = "";
+				}
+			}
+
+			fileInput.addEventListener("change", onUploadChanged);
+
+			const defaultTex = buildBoardTexture(null);
+			boardFaceMat.map = defaultTex;
+			boardFaceMat.needsUpdate = true;
+
+			const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+			const bgm = new Audio(MUSIC_PATH);
+			bgm.loop = true;
+			bgm.volume = 0.42;
+			let chargingOsc = null;
+			let chargingGain = null;
+
+			function resumeAudio() {
+				if (audioCtx.state !== "running") {
+					audioCtx.resume().catch(() => {});
+				}
+				if (musicEnabled && bgm.paused) {
+					bgm.play().catch(() => {});
+				}
+			}
+
+			function startChargeTone() {
+				if (!sfxEnabled) return;
+				stopChargeTone();
+				chargingOsc = audioCtx.createOscillator();
+				chargingGain = audioCtx.createGain();
+				chargingOsc.type = "triangle";
+				chargingOsc.frequency.setValueAtTime(120, audioCtx.currentTime);
+				chargingGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+				chargingOsc.connect(chargingGain).connect(audioCtx.destination);
+				chargingOsc.start();
+			}
+
+			function stopChargeTone() {
+				if (!chargingOsc || !chargingGain) return;
+				const t = audioCtx.currentTime;
+				chargingGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+				chargingOsc.stop(t + 0.06);
+				chargingOsc = null;
+				chargingGain = null;
+			}
+
+			function playHitSound(isBull) {
+				if (!sfxEnabled) return;
+				const t0 = audioCtx.currentTime;
+
+				const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.06, audioCtx.sampleRate);
+				const data = noiseBuffer.getChannelData(0);
+				for (let i = 0; i < data.length; i++) {
+					data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+				}
+				const noise = audioCtx.createBufferSource();
+				noise.buffer = noiseBuffer;
+				const filter = audioCtx.createBiquadFilter();
+				filter.type = "bandpass";
+				filter.frequency.value = 640;
+				filter.Q.value = 1.4;
+				const gain = audioCtx.createGain();
+				gain.gain.setValueAtTime(0.0001, t0);
+				gain.gain.linearRampToValueAtTime(0.065, t0 + 0.01);
+				gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.09);
+				noise.connect(filter).connect(gain).connect(audioCtx.destination);
+				noise.start(t0);
+				noise.stop(t0 + 0.1);
+
+				if (isBull) {
+					const ding = audioCtx.createOscillator();
+					const dg = audioCtx.createGain();
+					ding.type = "sine";
+					ding.frequency.setValueAtTime(1320, t0);
+					ding.frequency.exponentialRampToValueAtTime(880, t0 + 0.14);
+					dg.gain.setValueAtTime(0.0001, t0);
+					dg.gain.linearRampToValueAtTime(0.08, t0 + 0.01);
+					dg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.2);
+					ding.connect(dg).connect(audioCtx.destination);
+					ding.start(t0);
+					ding.stop(t0 + 0.22);
+				}
+			}
+
+			function playThrowWhoosh(power) {
+				if (!sfxEnabled) return;
+				const t0 = audioCtx.currentTime;
+				const osc = audioCtx.createOscillator();
+				const gain = audioCtx.createGain();
+				const filter = audioCtx.createBiquadFilter();
+				filter.type = "highpass";
+				filter.frequency.value = 420;
+				osc.type = "sawtooth";
+				osc.frequency.setValueAtTime(520 + power * 220, t0);
+				osc.frequency.exponentialRampToValueAtTime(140, t0 + 0.14);
+				gain.gain.setValueAtTime(0.0001, t0);
+				gain.gain.linearRampToValueAtTime(0.028 + power * 0.02, t0 + 0.01);
+				gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.16);
+				osc.connect(filter).connect(gain).connect(audioCtx.destination);
+				osc.start(t0);
+				osc.stop(t0 + 0.18);
+			}
+
+			const clock = new THREE.Clock();
+
+			function updateCharging(nowMs) {
+				chargePowerRaw = THREE.MathUtils.clamp((nowMs - chargeStart) / 1200, 0, 1);
+				chargePower = easeOutQuad(chargePowerRaw);
+
+				if (chargingOsc && chargingGain) {
+					const t = audioCtx.currentTime;
+					chargingOsc.frequency.setTargetAtTime(120 + chargePower * 140, t, 0.03);
+					chargingGain.gain.setTargetAtTime(0.006 + chargePower * 0.018, t, 0.03);
+				}
+
+				const time = nowMs * 0.001;
+				const n1 = Math.sin(time * 39.7) * 0.62 + Math.sin(time * 67.1) * 0.38;
+				const n2 = Math.sin((time + 7.3) * 42.5) * 0.61 + Math.sin((time + 3.1) * 71.9) * 0.39;
+				const shakePower = Math.min(chargePower / CHARGE_SHAKE_CAP_POWER, 1);
+				const shake = 0.0024 * shakePower;
+
+				dart.position.set(
+					dartIdlePos.x + n1 * shake,
+					dartIdlePos.y + n2 * shake,
+					dartIdlePos.z - chargePower * DART_CHARGE_BACK_DISTANCE
+				);
+				const minDartZ = CAMERA_POS_Z + DART_CAMERA_SAFE_GAP;
+				if (dart.position.z < minDartZ) dart.position.z = minDartZ;
+				dart.scale.setScalar(DART_MODEL_SCALE * (1 + chargePower * 0.05));
+				dart.lookAt(aimX, BOARD_CENTER_Y + aimY, boardZ + 0.004);
+				dart.rotateX(-chargePower * 0.08);
+			}
+
+			function updateIdlePose() {
+				dart.position.copy(dartIdlePos);
+				dart.scale.setScalar(DART_MODEL_SCALE);
+				dart.lookAt(0, BOARD_CENTER_Y, boardZ + 0.004);
+			}
+
+			function updateStuckWobble(nowMs) {
+				const elapsed = (nowMs - stuckStartMs) * 0.001;
+				const life = Math.max(0, 1 - elapsed / 0.55);
+				const amp = DART_TAIL_WOBBLE_MAX * life;
+				const a = elapsed * DART_TAIL_WOBBLE_HZ * Math.PI * 2;
+				const wobX = Math.sin(a) * amp;
+				const wobY = Math.sin(a * 1.27 + 0.7) * amp * 0.75;
+				const wobbleQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(wobX, wobY, 0, "XYZ"));
+				dart.quaternion.copy(stuckBaseQuat).multiply(wobbleQuat);
+				const tipAxisWorld = stuckLocalTipAxis.clone().applyQuaternion(dart.quaternion);
+				dart.position.copy(stuckTipPoint).addScaledVector(tipAxisWorld, -DART_TIP_OFFSET);
+			}
+
+			function updateFiring(_nowMs, dt) {
+				const prev = dart.position.clone();
+				fireElapsed += dt;
+
+				dartVelocity.y += THROW_GRAVITY_Y * dt;
+				dart.position.addScaledVector(dartVelocity, dt);
+				dart.rotation.z += dt * (6 + firePower * 10);
+				if (dartVelocity.lengthSq() > 1e-5) {
+					const ahead = dart.position.clone().add(dartVelocity);
+					dart.lookAt(ahead);
+				}
+
+				const boardHitZ = boardZ + 0.004;
+				const zA = prev.z - boardHitZ;
+				const zB = dart.position.z - boardHitZ;
+				if (zA * zB <= 0 && Math.abs(prev.z - dart.position.z) > 1e-7) {
+					const t = (boardHitZ - prev.z) / (dart.position.z - prev.z);
+					const hit = prev.clone().lerp(dart.position, t);
+					if (Math.sqrt(hit.x * hit.x + (hit.y - BOARD_CENTER_Y) * (hit.y - BOARD_CENTER_Y)) <= boardRadiusM) {
+						const impactDir = hit.clone().sub(prev).normalize();
+						applyHitResult(hit.x, hit.y, impactDir);
+					} else {
+						applyMissResult();
+					}
+					return;
+				}
+
+				if (fireElapsed >= THROW_MAX_TIME || dart.position.y < FLOOR_Y - 0.2 || dart.position.z < CAMERA_POS_Z - 2) {
+					applyMissResult();
+				}
+			}
+
+			function updateMissDrop(nowMs, dt) {
+				if (!missDropping) return;
+				dartVelocity.y += THROW_GRAVITY_Y * dt;
+				dart.position.addScaledVector(dartVelocity, dt);
+				dart.rotation.z += dt * 10.5;
+				if (dartVelocity.lengthSq() > 1e-5) {
+					const ahead = dart.position.clone().add(dartVelocity);
+					dart.lookAt(ahead);
+				}
+				const restY = FLOOR_Y + 0.018;
+				if (dart.position.y <= restY) {
+					dart.position.y = restY;
+					dart.rotation.x = Math.PI * 0.5;
+					dart.rotation.y = 0.25;
+					dart.rotation.z = 0.18;
+					dartVelocity.set(0, 0, 0);
+					missDropping = false;
+					missLandedAt = nowMs;
+				}
+			}
+
+			function animate() {
+				requestAnimationFrame(animate);
+				const dt = Math.min(clock.getDelta(), 0.05);
+				const nowMs = performance.now();
+				const focalTarget = state === State.Charging ? focalChargingMm : focalIdleMm;
+				const focalNow = THREE.MathUtils.lerp(camera.getFocalLength(), focalTarget, CAMERA_FOCAL_LERP_SPEED);
+				camera.setFocalLength(focalNow);
+
+				updateCrosshair();
+
+				if (state === State.Idle) {
+					updateIdlePose();
+				} else if (state === State.Charging) {
+					updateCharging(nowMs);
+				} else if (state === State.Firing) {
+					updateFiring(nowMs, dt);
+				} else if (state === State.Scored) {
+					if (hasStuckHit) updateStuckWobble(nowMs);
+					if (!hasStuckHit) updateMissDrop(nowMs, dt);
+					const scoredDone = hasStuckHit ?
+						nowMs >= scoredUntil :
+						(!missDropping && missLandedAt > 0 && nowMs >= missLandedAt + 550);
+					if (scoredDone) {
+						resetForNext();
+					}
+				}
+
+				boardPulse += (1 - boardPulse) * 0.22;
+				boardGroup.scale.set(boardPulse, boardPulse, 1);
+
+				renderer.render(scene, camera);
+			}
+
+			animate();
+
+			window.addEventListener("resize", syncViewportSize);
+			if (window.visualViewport) {
+				window.visualViewport.addEventListener("resize", syncViewportSize);
+				window.visualViewport.addEventListener("scroll", syncViewportSize);
+			}
+		</script>
+	</body>
+</html>
