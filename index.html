@@ -149,6 +149,16 @@
 						</div>
 					</div>
 
+					<div class="rounded-xl border border-white/[0.08] bg-white/[0.06] p-3">
+						<div class="mb-2.5 text-sm uppercase text-white/70">环境模型</div>
+						<div class="grid grid-cols-2 gap-0.5 rounded-[10px] bg-black/30 p-1">
+							<button data-model-type="glb"
+								class="model-type-btn rounded-[8px] py-1.5 text-[12px] font-medium text-white/50 transition-all hover:text-white/80">GLB</button>
+							<button data-model-type="ply"
+								class="model-type-btn rounded-[8px] bg-white/[0.14] py-1.5 text-[12px] font-medium text-white/90 shadow-sm ring-1 ring-inset ring-white/[0.16]">PLY</button>
+						</div>
+					</div>
+
 					<div class="divide-y divide-white/[0.06] rounded-xl border border-white/[0.08] bg-white/[0.06]">
 						<label class="flex cursor-pointer items-center justify-between px-3.5 py-3">
 							<span class="text-sm text-white/70">音乐</span>
@@ -181,10 +191,13 @@
 
 
 		<script type="module">
-			import * as THREE from "https://esm.sh/three@0.160.0";
+			import * as THREE from "https://esm.sh/three@0.178.0";
 			import {
 				GLTFLoader
-			} from "https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
+			} from "https://esm.sh/three@0.178.0/examples/jsm/loaders/GLTFLoader.js";
+			import {
+				SplatMesh
+			} from "https://esm.sh/@sparkjsdev/spark@0.1.10?deps=three@0.178.0";
 
 			const State = Object.freeze({
 				Idle: "Idle",
@@ -273,16 +286,33 @@
 			const DART_TAIL_WOBBLE_MAX = 0.045;
 			const DART_TAIL_WOBBLE_HZ = 21;
 			const FLOOR_Y = 0.0;
-			const SHOWROOM_PATH = "./showroom1.glb";
-			const SHOWROOM_SCALE = 1.0;
-			const SHOWROOM_CENTER_Z = 2.25;
-			const SHOWROOM_ROTATION_DEG = new THREE.Vector3(0, -90, 0);
-			const SHOWROOM_OFFSET_PRESETS = {
-				easy: new THREE.Vector3(-0.8, 0.245, 0.0),
-				medium: new THREE.Vector3(-0.8, 0.245, 1.0),
-				hard: new THREE.Vector3(-0.8, 0.245, 2.0)
+			const SHOWROOM_CONFIGS = {
+				glb: {
+					path: "./showroom1.glb",
+					scale: 1.0,
+					centerZ: 2.25,
+					rotationDeg: new THREE.Vector3(0, -90, 0),
+					offsetPresets: {
+						easy: new THREE.Vector3(-0.8, 0.245, 0.0),
+						medium: new THREE.Vector3(-0.8, 0.245, 1.0),
+						hard: new THREE.Vector3(-0.8, 0.245, 2.0)
+					}
+				},
+				ply: {
+					path: "./showroom1.ply",
+					scale: 1.0,
+					centerZ: 2.25,
+					rotationDeg: new THREE.Vector3(180, 10, 0),
+					offsetPresets: {
+						easy: new THREE.Vector3(-1.5, 1.0, 1.2),
+						medium: new THREE.Vector3(-1.5, 1.0, 2.7),
+						hard: new THREE.Vector3(-1.5, 1.0, 4.2)
+					}
+				}
 			};
-			let currentShowroomOffset = SHOWROOM_OFFSET_PRESETS[currentDifficulty].clone();
+			let currentShowroomType = "ply";
+			let currentShowroomConfig = SHOWROOM_CONFIGS[currentShowroomType];
+			let currentShowroomOffset = currentShowroomConfig.offsetPresets[currentDifficulty].clone();
 			const HDR_ENV_PATH = "./hdr1.jpg";
 			const HDR_ENV_ROTATION_DEG = -90;
 			const MUSIC_PATH = "./music.mp3";
@@ -397,66 +427,128 @@
 			scene.add(backWall);
 
 			let showroom = null;
+			let showroomLoadToken = 0;
 			const gltfLoader = new GLTFLoader();
+
+			function setFallbackSceneVisible(visible) {
+				floor.visible = visible;
+				rug.visible = visible;
+				backWall.visible = visible;
+			}
+
+			function disposeShowroomNode(node) {
+				if (!node) return;
+				if (typeof node.dispose === "function") {
+					try {
+						node.dispose();
+					} catch (_err) {}
+				}
+				if (typeof node.traverse !== "function") return;
+				node.traverse((obj) => {
+					if (obj.geometry && typeof obj.geometry.dispose === "function") {
+						obj.geometry.dispose();
+					}
+					if (!obj.material) return;
+					const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+					mats.forEach((m) => {
+						if (m && typeof m.dispose === "function") m.dispose();
+					});
+				});
+			}
+
+			function clearShowroom() {
+				if (!showroom) return;
+				scene.remove(showroom);
+				disposeShowroomNode(showroom);
+				showroom = null;
+			}
 
 			function placeShowroom() {
 				if (!showroom) return;
 				showroom.position.set(0, 0, 0);
 				showroom.rotation.set(
-					THREE.MathUtils.degToRad(SHOWROOM_ROTATION_DEG.x),
-					THREE.MathUtils.degToRad(SHOWROOM_ROTATION_DEG.y),
-					THREE.MathUtils.degToRad(SHOWROOM_ROTATION_DEG.z)
+					THREE.MathUtils.degToRad(currentShowroomConfig.rotationDeg.x),
+					THREE.MathUtils.degToRad(currentShowroomConfig.rotationDeg.y),
+					THREE.MathUtils.degToRad(currentShowroomConfig.rotationDeg.z)
 				);
 				showroom.updateMatrixWorld(true);
 				const box = new THREE.Box3().setFromObject(showroom);
+				if (box.isEmpty()) {
+					showroom.position.set(
+						currentShowroomOffset.x,
+						FLOOR_Y + currentShowroomOffset.y,
+						currentShowroomConfig.centerZ + currentShowroomOffset.z
+					);
+					showroom.updateMatrixWorld(true);
+					return;
+				}
 				const center = box.getCenter(new THREE.Vector3());
 				showroom.position.set(
 					-center.x + currentShowroomOffset.x,
 					FLOOR_Y - box.min.y + currentShowroomOffset.y,
-					SHOWROOM_CENTER_Z - center.z + currentShowroomOffset.z
+					currentShowroomConfig.centerZ - center.z + currentShowroomOffset.z
 				);
 				showroom.updateMatrixWorld(true);
 			}
 
 			function loadShowroom() {
-				gltfLoader.load(
-					SHOWROOM_PATH,
-					(gltf) => {
-						showroom = gltf.scene;
-						showroom.name = "showroom";
-						showroom.traverse((obj) => {
-							if (obj.isMesh && obj.material) {
+				const token = ++showroomLoadToken;
+				const cfg = currentShowroomConfig;
+				clearShowroom();
+				setFallbackSceneVisible(true);
+
+				if (currentShowroomType === "glb") {
+					gltfLoader.load(
+						cfg.path,
+						(gltf) => {
+							if (token !== showroomLoadToken) return;
+							showroom = gltf.scene;
+							showroom.name = "showroom";
+							showroom.traverse((obj) => {
+								if (!obj.isMesh || !obj.material) return;
 								obj.castShadow = true;
 								obj.receiveShadow = true;
-								if (Array.isArray(obj.material)) {
-									obj.material.forEach((m) => {
-										if (!m) return;
-										m.transparent = false;
-										m.opacity = 1;
-										m.depthWrite = true;
-										m.side = THREE.DoubleSide;
-									});
-								} else {
-									obj.material.transparent = false;
-									obj.material.opacity = 1;
-									obj.material.depthWrite = true;
-									obj.material.side = THREE.DoubleSide;
-								}
-							}
-						});
-						scene.add(showroom);
+								const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+								mats.forEach((m) => {
+									if (!m) return;
+									m.transparent = false;
+									m.opacity = 1;
+									m.depthWrite = true;
+									m.side = THREE.DoubleSide;
+								});
+							});
+							showroom.scale.setScalar(cfg.scale);
+							scene.add(showroom);
+							placeShowroom();
+							setFallbackSceneVisible(false);
+						},
+						undefined,
+						(err) => {
+							if (token !== showroomLoadToken) return;
+							console.warn("Failed to load showroom.glb", err);
+						}
+					);
+					return;
+				}
 
-						showroom.scale.setScalar(SHOWROOM_SCALE);
+				const splat = new SplatMesh({
+					url: cfg.path
+				});
+				splat.name = "showroom";
+				splat.scale.setScalar(cfg.scale);
+				scene.add(splat);
+				showroom = splat;
+
+				Promise.resolve(splat.initialized)
+					.then(() => {
+						if (token !== showroomLoadToken || showroom !== splat) return;
 						placeShowroom();
-						floor.visible = false;
-						rug.visible = false;
-						backWall.visible = false;
-					},
-					undefined,
-					(err) => {
-						console.warn("Failed to load showroom.glb", err);
-					}
-				);
+						setFallbackSceneVisible(false);
+					})
+					.catch((err) => {
+						if (token !== showroomLoadToken || showroom !== splat) return;
+						console.warn("Failed to load showroom.ply", err);
+					});
 			}
 			loadShowroom();
 
@@ -984,6 +1076,7 @@
 			const boardSizeMeta = document.getElementById("boardSizeMeta");
 			const difficultyButtons = Array.from(document.querySelectorAll(".difficulty-btn"));
 			const boardSizeButtons = Array.from(document.querySelectorAll(".board-size-btn"));
+			const modelTypeButtons = Array.from(document.querySelectorAll(".model-type-btn"));
 
 			function refreshSettingsUI() {
 				difficultyButtons.forEach((btn) => {
@@ -998,6 +1091,12 @@
 						"board-size-btn rounded-lg px-2 py-1.5 text-xs bg-white text-black" :
 						"board-size-btn rounded-lg px-2 py-1.5 text-xs text-white/75";
 				});
+				modelTypeButtons.forEach((btn) => {
+					const active = btn.dataset.modelType === currentShowroomType;
+					btn.className = active ?
+						"model-type-btn rounded-lg px-2 py-1.5 text-xs bg-white text-black" :
+						"model-type-btn rounded-lg px-2 py-1.5 text-xs text-white/75";
+				});
 				const d = DIFFICULTY_PRESETS[currentDifficulty];
 				difficultyMeta.textContent = `x=${d.distance}m  |  k=${d.k}`;
 				const radius = BOARD_SIZE_PRESETS[currentBoardSize];
@@ -1009,7 +1108,7 @@
 			function applyDifficultyLevel(level) {
 				currentDifficulty = level;
 				const preset = DIFFICULTY_PRESETS[level];
-				currentShowroomOffset.copy(SHOWROOM_OFFSET_PRESETS[level]);
+				currentShowroomOffset.copy(currentShowroomConfig.offsetPresets[level]);
 				applyDistanceAndDifficulty(preset.distance, preset.k);
 				applyBoardSize(boardRadiusM);
 				refreshSettingsUI();
@@ -1021,11 +1120,24 @@
 				refreshSettingsUI();
 			}
 
+			function applyShowroomType(type) {
+				if (!SHOWROOM_CONFIGS[type] || type === currentShowroomType) return;
+				currentShowroomType = type;
+				currentShowroomConfig = SHOWROOM_CONFIGS[type];
+				currentShowroomOffset.copy(currentShowroomConfig.offsetPresets[currentDifficulty]);
+				loadShowroom();
+				placeShowroom();
+				refreshSettingsUI();
+			}
+
 			difficultyButtons.forEach((btn) => {
 				btn.addEventListener("click", () => applyDifficultyLevel(btn.dataset.difficulty));
 			});
 			boardSizeButtons.forEach((btn) => {
 				btn.addEventListener("click", () => applyBoardSizeLevel(btn.dataset.boardSize));
+			});
+			modelTypeButtons.forEach((btn) => {
+				btn.addEventListener("click", () => applyShowroomType(btn.dataset.modelType));
 			});
 
 			function showOnboarding() {
